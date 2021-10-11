@@ -6,7 +6,7 @@
       <v-form ref="formValidation" v-model="formValidation" class="pa-4 mt-6">
           <v-text-field v-model="name" :rules="[validation.required]" filled label="Nombre"></v-text-field>
           <v-text-field v-model="email" :rules="[validation.email]" filled label="Correo electronico" type="email"></v-text-field>
-          <v-text-field v-model="password" :rules="[validation.password, validation.length(6)]" filled label="Contraseña" type="password" counter="6" style="min-height: 96px"></v-text-field>
+          <v-text-field v-model="password" :rules="[validation.password, validation.length(6)]" filled label="Contraseña" type="password" counter="6" style="min-height: 96px" autocomplete="on"></v-text-field>
       </v-form>
       <v-alert v-if="errorMsg" border="top" color="red" class="ml-5 mr-5">
           {{errorMsg}}
@@ -16,7 +16,6 @@
           <v-btn text @click="$refs.form.reset()">Limpiar formulario</v-btn>
           <v-spacer/>
           <v-btn :disabled="!formValidation" color="primary" :loading="loading" depressed @click="signUp">Registrate</v-btn>
-          <v-btn color="primary" :loading="loading" depressed @click="test">testing</v-btn>
       </v-card-actions>
   </v-card>
 </template>
@@ -42,9 +41,9 @@ export default {
         }
     }),
     methods: {
-        async signUp() {
-            this.loading = true
-
+        signUp() {
+            this.loading = true;
+    
             const auth = getAuth();
             createUserWithEmailAndPassword(auth, this.email.toLowerCase(), this.password)
                 .then((userCredential) => {
@@ -56,19 +55,23 @@ export default {
 
                     addDoc(collection(db, 'users'), { name: this.name, email: this.email.toLowerCase() })
 
+                    this.loading = false
                     this.$router.replace({ name: "Home" });
                 })
                 .catch((error) => {
-                    this.errorMsg = 'Ha sucedido un error'
+                    this.errorMsg = 'Ha sucedido un error.'
                     if(error.message) {
-                        this.errorMsg = error.message
+                        this.loading = false
+                        if(error.message == 'Firebase: Error (auth/email-already-in-use).'){
+                            this.errorMsg = 'El correo ya esta en uso.'
+                        }else{
+                            this.errorMsg = error.message
+                        }
                     }
                 });
-
-            this.loading = false
         },
         test () {
-            console.log(db);
+            this.loading = true
         }
     }
 }
