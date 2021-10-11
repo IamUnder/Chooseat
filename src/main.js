@@ -14,7 +14,7 @@ const firebaseConfig = config
 // Inicializar Firebase
 const firebase = initializeApp(firebaseConfig);
 
-export const db = firebase.firestore()
+export const db = firebase
 
 new Vue({
   router,
