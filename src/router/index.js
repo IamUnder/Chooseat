@@ -1,14 +1,16 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import store from '../store/index'
 import Home from '../views/Home.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/',
+    path: '/home',
     name: 'Home',
-    component: Home
+    component: Home,
+    beforeEnter: guard
   },
   {
     path: '/signUp',
@@ -16,7 +18,7 @@ const routes = [
     component: () => import(/* webpackChunkName: "SignUp" */ '../views/SignUp.vue')
   },
   {
-    path: '/signIn',
+    path: '/',
     name: 'Inicio de sesión',
     component: () => import(/* webpackChunkName: "SignIn" */ '../views/SignIn.vue')
   },
@@ -29,6 +31,14 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
   }
 ]
+
+function guard(to, from, next) {
+  if(store.state.user.id){
+    next()
+  } else {
+    next('/')
+  }
+}
 
 const router = new VueRouter({
   mode: 'history',
