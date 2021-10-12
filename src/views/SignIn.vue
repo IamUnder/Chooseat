@@ -48,7 +48,8 @@ export default {
                         this.$store.dispatch('user/setUserData',{
                             id: doc.id,
                             name: doc.data().name,
-                            email: doc.data().email
+                            email: doc.data().email,
+                            partnerId: doc.data().partnerId || ''
                         })
                     });
         

@@ -9,7 +9,10 @@
         <h2>Chooseat</h2>
       </div>
 
-      <v-spacer></v-spacer> 
+      <v-spacer></v-spacer>
+      <v-btn v-if="userId" to="/addPartner" text>
+        Añadir compañero
+      </v-btn> 
     </v-app-bar>
 
     <v-main>
@@ -26,5 +29,10 @@ export default {
   data: () => ({
     //
   }),
+  computed: {
+    userId () {
+      return this.$store.state.user.id
+    }
+  }
 };
 </script>
