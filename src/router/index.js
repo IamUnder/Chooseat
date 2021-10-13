@@ -23,6 +23,12 @@ const routes = [
     component: () => import(/* webpackChunkName: "SignIn" */ '../views/SignIn.vue')
   },
   {
+    path: '/room',
+    name: 'Opciones de sala',
+    beforeEnter: guard,
+    component: () => import(/* webpackChunkName: "Room" */ '../views/Room.vue')
+  },
+  {
     path: '/addPartner',
     name: 'Añadir usuario',
     beforeEnter: guard,

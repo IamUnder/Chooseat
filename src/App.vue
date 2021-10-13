@@ -10,8 +10,8 @@
       </div>
 
       <v-spacer></v-spacer>
-      <v-btn v-if="userId" to="/addPartner" text>
-        Añadir compañero
+      <v-btn v-if="userId" to="/Room" text>
+        Sala actual: {{roomCode}}
       </v-btn> 
     </v-app-bar>
 
@@ -32,6 +32,9 @@ export default {
   computed: {
     userId () {
       return this.$store.state.user.id
+    },
+    roomCode () {
+      return this.$store.state.user.roomCode
     }
   }
 };
