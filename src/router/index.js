@@ -15,11 +15,13 @@ const routes = [
   {
     path: '/signUp',
     name: 'Registro',
+    beforeEnter: antiGuard,
     component: () => import(/* webpackChunkName: "SignUp" */ '../views/SignUp.vue')
   },
   {
     path: '/',
     name: 'Inicio de sesión',
+    beforeEnter: antiGuard,
     component: () => import(/* webpackChunkName: "SignIn" */ '../views/SignIn.vue')
   },
   {
@@ -41,6 +43,14 @@ function guard(to, from, next) {
     next()
   } else {
     next('/')
+  }
+}
+
+function antiGuard(to, from, next) {
+  if(store.state.user.id){
+    next('/home')
+  } else {
+    next()
   }
 }
 

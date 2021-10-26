@@ -49,7 +49,7 @@ export default {
                             id: doc.id,
                             name: doc.data().name,
                             email: doc.data().email,
-                            partnerId: doc.data().partnerId || ''
+                            roomCode: doc.data().roomCode || ''
                         })
                     });
         

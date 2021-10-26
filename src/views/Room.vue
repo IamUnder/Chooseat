@@ -32,31 +32,31 @@
             <v-card>
                 <v-container>
                     <h2>Unirse a una sala</h2>
-                    <p>Introduce el codigo de sala y su contraseña para unirte a ella.</p>
+                    <p>Para buscar introduce el codigo electronico, codigo de sala o link de invitación.</p>
                     <v-row>
-                        <v-form ref="form" v-model="form">
+                        <v-form ref="form" v-model="searchForm">
                             <v-col class="d-inline-flex">
-                                <v-text-field v-model="email" :rules="[validations.required]" filled label="Dirección de correo" type="email"></v-text-field>
-                                <v-btn @click="search()" :disabled="!creationForm" large color="primary" class="mt-2 ml-4" depressed>Buscar</v-btn>
+                                <v-text-field v-model="email" :rules="[validations.required]" filled label="Codigo de sala o correo o invitación" type="text" :full-width='true'></v-text-field>
+                                <v-btn @click="search()" :disabled="!searchForm" large color="primary" class="mt-2 ml-4" depressed>Buscar</v-btn>
                             </v-col>
                         </v-form>
                     </v-row>
                     <v-row v-if="found">
-                        <v-col class="d-inline-flex">
-                            <v-card>
+                        <v-col class="">
+                            <v-card v-for="room in found" v-bind="found" :key="room" class="mt-4">
                                 <v-card-text>
                                     <div>
-                                        {{found.email}}
+                                        {{room.owner}}
                                     </div>
                                     <p class="display-1 text-primary">
-                                        {{found.name}}
+                                        Codigo: {{room.code}}
                                     </p>
                                     <div class="text-primary">
                                         Para añadir este usuario, haz click en boton "Añadir" de debajo.
                                     </div>
                                 </v-card-text>
                                 <v-card-actions>
-                                    <v-btn color="primary" @click="add(found.id)">Añadir</v-btn>
+                                    <v-btn color="primary" @click="add">Añadir</v-btn>
                                 </v-card-actions>
                             </v-card>
                         </v-col>
@@ -78,7 +78,7 @@ import { db } from '../main'
 import { getAuth } from '@firebase/auth';
 export default {
     data : () => ({
-        form: false,
+        searchForm: false,
         creationForm: false,
         code: '',
         password: '',
@@ -98,49 +98,82 @@ export default {
     }),
     methods: {
         async search () {
+            // Establecemos los valores iniciales.
             this.loading = true
             this.msg = ''
 
+            // Hacemos el login en firebase
             getAuth()
+
+            // Comprobamos si el usuario ha introducido un email
             let q = query(collection(db, 'users'), where('email', '==', this.email.toLowerCase()))
             let user = await getDocs(q)
-            user.forEach((doc) => {
-                this.found = {
-                    email: doc.data().email,
-                    name: doc.data().name,
-                    id: doc.id
-                }
-            });
-
+            // Si el usuario esta vacio comprobaremos si es un codigo de sala
             if (user.empty) {
-                this.found = null
-                this.msg = 'No hay ningun usuario con ese correo.'    
+                let qR = query(collection(db,'rooms'), where('code','==',this.email))    
+                let room = await getDocs(qR)
+
+                room.forEach((rDoc) => {
+                    this.found = {
+                        code: rDoc.data().code,
+                        owner: rDoc.data().idOwner
+                    }
+                })
+
+            // Si el usuario se ha encontrado comprobamos las salas que posee
+            } else {
+                user.forEach(async (doc) => {
+                    let id = doc.id
+                    let docMail = doc.data().email
+                    let qR = query(collection(db, 'rooms'), where('idOwner','==',id))
+                    let room = await getDocs(qR)
+
+                    // Comprobamos si el usuario tiene salas
+                    // si no las tiene mandaremos el mensaje de error, si las tiene las mostraremos.
+                    if (room.empty) {
+                        this.msg = 'El usurio no es propietario de ninguna sala.'
+                    } else {
+                        this.found = []
+    
+                        room.forEach((rDoc) => {
+                            this.found.push({
+                                code: rDoc.data().code,
+                                owner: docMail
+                            })
+                        })
+                    }
+
+                })
             }
+
+
+
+            
             
             this.loading = false
         },
-        async add (id) {
-            try {
-                const userId = this.$store.state.user.id
-                console.log(userId);
+        async add () {
+            console.log('equisde');
+            // try {
+            //     const userId = this.$store.state.user.id
+            //     console.log(userId);
 
-                const authUser = doc(db, 'users', userId)
-                await updateDoc(authUser, { partnerId: id });
+            //     const authUser = doc(db, 'users', userId)
+            //     await updateDoc(authUser, { partnerId: id });
 
-                this.$store.dispatch('user/setPartner', id)
+            //     this.$store.dispatch('user/setPartner', id)
 
-                this.color = 'success'
-                this.alertMsg = 'Compañero agregado correctamente.'
-                this.show = true
-            } catch (error) {
+            //     this.color = 'success'
+            //     this.alertMsg = 'Compañero agregado correctamente.'
+            //     this.show = true
+            // } catch (error) {
 
-                this.color = 'red'
-                this.alertMsg = 'Ha ocurrido un error.Pruebe otra vez.'
-                this.show = true
-            }
+            //     this.color = 'red'
+            //     this.alertMsg = 'Ha ocurrido un error.Pruebe otra vez.'
+            //     this.show = true
+            // }
         },
         async create() {
-            console.log(this.code + this.password);
             // Establecemos los valores necesarios
             this.loading = true
             this.createMsg = ''
@@ -148,17 +181,14 @@ export default {
             // Procedemos a hacer el Auth de firebase y comprobamos si la sala existe 
             getAuth()
             let q = query(collection(db, 'rooms'), where('code', '==', this.code))
-            let user = await getDocs(q)
-            // user.forEach((doc) => {
-            //     this.found = {
-            //         email: doc.data().email,
-            //         name: doc.data().name,
-            //         id: doc.id
-            //     }
-            // });
-
-            if (!user.empty) {
+            let room = await getDocs(q)
+            
+            // Comprobamos si la sala existe
+            // Si la sala existe devolvemos un codigo de error
+            // Si no existe la creamos
+            if (!room.empty) {
                 this.createMsg = 'Ya hay una sala con ese codigo.'    
+                this.loading = false
             } else {
                 // Creamos el documento de la sala
                 addDoc(collection(db, 'rooms'), {
@@ -173,10 +203,11 @@ export default {
                     let userRef = doc(db, 'users', userId)
                     await updateDoc(userRef, {roomCode: this.code})
                 })
+
+                this.loading = false
+                this.$router.replace({name: 'Home'})
             }
             
-            this.loading = false
-            this.$router.replace({name: 'Home'})
         } 
     }
 }
